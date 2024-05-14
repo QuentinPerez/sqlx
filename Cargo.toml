@@ -4,22 +4,22 @@ members = [
     "sqlx-core",
     "sqlx-macros",
     "sqlx-macros-core",
-    "sqlx-test",
-    "sqlx-cli",
-    #    "sqlx-bench",
-    "sqlx-mysql",
+    # "sqlx-test",
+    # "sqlx-cli",
+    # "sqlx-bench",
+    # "sqlx-mysql",
     "sqlx-postgres",
     "sqlx-sqlite",
-    "examples/mysql/todos",
-    "examples/postgres/axum-social-with-tests",
-    "examples/postgres/chat",
-    "examples/postgres/files",
-    "examples/postgres/json",
-    "examples/postgres/listen",
-    "examples/postgres/todos",
-    "examples/postgres/mockable-todos",
-    "examples/postgres/transaction",
-    "examples/sqlite/todos",
+    # "examples/mysql/todos",
+    # "examples/postgres/axum-social-with-tests",
+    # "examples/postgres/chat",
+    # "examples/postgres/files",
+    # "examples/postgres/json",
+    # "examples/postgres/listen",
+    # "examples/postgres/todos",
+    # "examples/postgres/mockable-todos",
+    # "examples/postgres/transaction",
+    # "examples/sqlite/todos",
 ]
 
 [workspace.package]
@@ -56,7 +56,13 @@ default = ["any", "macros", "migrate", "json"]
 
 derive = ["sqlx-macros/derive"]
 macros = ["derive", "sqlx-macros/macros"]
-migrate = ["sqlx-core/migrate", "sqlx-macros?/migrate", "sqlx-mysql?/migrate", "sqlx-postgres?/migrate", "sqlx-sqlite?/migrate"]
+migrate = [
+    "sqlx-core/migrate",
+    "sqlx-macros?/migrate",
+    "sqlx-mysql?/migrate",
+    "sqlx-postgres?/migrate",
+    "sqlx-sqlite?/migrate",
+]
 
 # intended mainly for CI and docs
 all-databases = ["mysql", "sqlite", "postgres", "any"]
@@ -73,7 +79,11 @@ _unstable-all-types = [
 ]
 
 # Base runtime features without TLS
-runtime-async-std = ["_rt-async-std", "sqlx-core/_rt-async-std", "sqlx-macros?/_rt-async-std"]
+runtime-async-std = [
+    "_rt-async-std",
+    "sqlx-core/_rt-async-std",
+    "sqlx-macros?/_rt-async-std",
+]
 runtime-tokio = ["_rt-tokio", "sqlx-core/_rt-tokio", "sqlx-macros?/_rt-tokio"]
 
 # TLS features
@@ -96,22 +106,72 @@ _rt-async-std = []
 _rt-tokio = []
 
 # database
-any = ["sqlx-core/any", "sqlx-mysql?/any", "sqlx-postgres?/any", "sqlx-sqlite?/any"]
+any = [
+    "sqlx-core/any",
+    "sqlx-mysql?/any",
+    "sqlx-postgres?/any",
+    "sqlx-sqlite?/any",
+]
 postgres = ["sqlx-postgres", "sqlx-macros?/postgres"]
 mysql = ["sqlx-mysql", "sqlx-macros?/mysql"]
 sqlite = ["sqlx-sqlite", "sqlx-macros?/sqlite"]
 
 # types
-json = ["sqlx-macros?/json", "sqlx-mysql?/json", "sqlx-postgres?/json", "sqlx-sqlite?/json"]
+json = [
+    "sqlx-macros?/json",
+    "sqlx-mysql?/json",
+    "sqlx-postgres?/json",
+    "sqlx-sqlite?/json",
+]
 
-bigdecimal = ["sqlx-core/bigdecimal", "sqlx-macros?/bigdecimal", "sqlx-mysql?/bigdecimal", "sqlx-postgres?/bigdecimal"]
-bit-vec = ["sqlx-core/bit-vec", "sqlx-macros?/bit-vec", "sqlx-postgres?/bit-vec"]
-chrono = ["sqlx-core/chrono", "sqlx-macros?/chrono", "sqlx-mysql?/chrono", "sqlx-postgres?/chrono", "sqlx-sqlite?/chrono"]
-ipnetwork = ["sqlx-core/ipnetwork", "sqlx-macros?/ipnetwork", "sqlx-postgres?/ipnetwork"]
-mac_address = ["sqlx-core/mac_address", "sqlx-macros?/mac_address", "sqlx-postgres?/mac_address"]
-rust_decimal = ["sqlx-core/rust_decimal", "sqlx-macros?/rust_decimal", "sqlx-mysql?/rust_decimal", "sqlx-postgres?/rust_decimal"]
-time = ["sqlx-core/time", "sqlx-macros?/time", "sqlx-mysql?/time", "sqlx-postgres?/time", "sqlx-sqlite?/time"]
-uuid = ["sqlx-core/uuid", "sqlx-macros?/uuid", "sqlx-mysql?/uuid", "sqlx-postgres?/uuid", "sqlx-sqlite?/uuid"]
+bigdecimal = [
+    "sqlx-core/bigdecimal",
+    "sqlx-macros?/bigdecimal",
+    "sqlx-mysql?/bigdecimal",
+    "sqlx-postgres?/bigdecimal",
+]
+bit-vec = [
+    "sqlx-core/bit-vec",
+    "sqlx-macros?/bit-vec",
+    "sqlx-postgres?/bit-vec",
+]
+chrono = [
+    "sqlx-core/chrono",
+    "sqlx-macros?/chrono",
+    "sqlx-mysql?/chrono",
+    "sqlx-postgres?/chrono",
+    "sqlx-sqlite?/chrono",
+]
+ipnetwork = [
+    "sqlx-core/ipnetwork",
+    "sqlx-macros?/ipnetwork",
+    "sqlx-postgres?/ipnetwork",
+]
+mac_address = [
+    "sqlx-core/mac_address",
+    "sqlx-macros?/mac_address",
+    "sqlx-postgres?/mac_address",
+]
+rust_decimal = [
+    "sqlx-core/rust_decimal",
+    "sqlx-macros?/rust_decimal",
+    "sqlx-mysql?/rust_decimal",
+    "sqlx-postgres?/rust_decimal",
+]
+time = [
+    "sqlx-core/time",
+    "sqlx-macros?/time",
+    "sqlx-mysql?/time",
+    "sqlx-postgres?/time",
+    "sqlx-sqlite?/time",
+]
+uuid = [
+    "sqlx-core/uuid",
+    "sqlx-macros?/uuid",
+    "sqlx-mysql?/uuid",
+    "sqlx-postgres?/uuid",
+    "sqlx-sqlite?/uuid",
+]
 regexp = ["sqlx-sqlite?/regexp"]
 
 [workspace.dependencies]
@@ -183,7 +243,8 @@ criterion = { version = "0.5.1", features = ["async_tokio"] }
 # even when SQLite isn't the intended test target, and fail if the build environment is not set up for compiling C code.
 [target.'cfg(sqlite_test_sqlcipher)'.dev-dependencies]
 # Enable testing with SQLCipher if specifically requested.
-libsqlite3-sys = { version = "0.28", features = ["bundled-sqlcipher"] }
+libsqlite3-sys = { git = "https://github.com/quentinperez/rusqlite.git", rev = "c45eb40f34ef576ffb7f8ba76e8a83bfb7fe5480", package = "libsqlite3-sys" }
+
 
 #
 # Any

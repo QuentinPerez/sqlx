@@ -21,11 +21,18 @@ regexp = ["dep:regex"]
 
 [dependencies]
 futures-core = { version = "0.3.19", default-features = false }
-futures-channel = { version = "0.3.19", default-features = false, features = ["sink", "alloc", "std"] }
+# futures-channel = { version = "0.3.19", default-features = false, features = [
+#     "sink",
+#     "alloc",
+#     "std",
+# ] }
 # used by the SQLite worker thread to block on the async mutex that locks the database handle
-futures-executor = { version = "0.3.19" }
-futures-intrusive = "0.5.0"
-futures-util = { version = "0.3.19", default-features = false, features = ["alloc", "sink"] }
+# futures-executor = { version = "0.3.19" }
+# futures-intrusive = "0.5.0"
+futures-util = { version = "0.3.19", default-features = false, features = [
+    "alloc",
+    "sink",
+] }
 
 chrono = { workspace = true, optional = true }
 time = { workspace = true, optional = true }
@@ -35,7 +42,7 @@ url = { version = "2.2.2", default-features = false }
 percent-encoding = "2.1.0"
 serde_urlencoded = "0.7"
 
-flume = { version = "0.11.0", default-features = false, features = ["async"] }
+# flume = { version = "0.11.0", default-features = false, features = ["async"] }
 
 atoi = "2.0"
 
@@ -46,17 +53,23 @@ serde = { version = "1.0.145", features = ["derive"], optional = true }
 regex = { version = "1.5.5", optional = true }
 
 [dependencies.libsqlite3-sys]
+git = "https://github.com/quentinperez/rusqlite.git"
+rev = "c45eb40f34ef576ffb7f8ba76e8a83bfb7fe5480"
+package = "libsqlite3-sys"
 version = "0.28.0"
 default-features = false
 features = [
-    "pkg-config",
-    "vcpkg",
-    "bundled",
-    "unlock_notify"
+    "buildtime_bindgen",
+    "min_sqlite_version_3_14_0",
+    "loadable_extension",
 ]
 
 [dependencies.sqlx-core]
 workspace = true
 
 [dev-dependencies]
-sqlx = { workspace = true, default-features = false, features = ["macros", "runtime-tokio", "tls-none"] }
+sqlx = { workspace = true, default-features = false, features = [
+    "macros",
+    "runtime-tokio",
+    "tls-none",
+] }

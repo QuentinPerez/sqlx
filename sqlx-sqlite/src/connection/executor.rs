@@ -3,7 +3,7 @@ use crate::{
 };
 use futures_core::future::BoxFuture;
 use futures_core::stream::BoxStream;
-use futures_util::{TryFutureExt, TryStreamExt};
+use futures_util::StreamExt;
 use sqlx_core::describe::Describe;
 use sqlx_core::error::Error;
 use sqlx_core::executor::{Execute, Executor};
@@ -24,12 +24,9 @@ impl<'c> Executor<'c> for &'c mut SqliteConnection {
         let arguments = query.take_arguments();
         let persistent = query.persistent() && arguments.is_some();
 
-        Box::pin(
-            self.worker
-                .execute(sql, arguments, self.row_channel_size, persistent)
-                .map_ok(flume::Receiver::into_stream)
-                .try_flatten_stream(),
-        )
+        let iter = self.worker.execute(sql, arguments, persistent);
+
+        futures_util::stream::iter(iter).boxed()
     }
 
     fn fetch_optional<'e, 'q: 'e, E: 'q>(
@@ -45,18 +42,10 @@ impl<'c> Executor<'c> for &'c mut SqliteConnection {
         let persistent = query.persistent() && arguments.is_some();
 
         Box::pin(async move {
-            let stream = self
-                .worker
-                .execute(sql, arguments, self.row_channel_size, persistent)
-                .map_ok(flume::Receiver::into_stream)
-                .try_flatten_stream();
+            let item = self.worker.execute(sql, arguments, persistent).next();
 
-            futures_util::pin_mut!(stream);
-
-            while let Some(res) = stream.try_next().await? {
-                if let Either::Right(row) = res {
-                    return Ok(Some(row));
-                }
+            if let Some(Ok(Either::Right(row))) = item {
+                return Ok(Some(row));
             }
 
             Ok(None)
@@ -72,7 +61,7 @@ impl<'c> Executor<'c> for &'c mut SqliteConnection {
         'c: 'e,
     {
         Box::pin(async move {
-            let statement = self.worker.prepare(sql).await?;
+            let statement = self.worker.prepare(sql)?;
 
             Ok(SqliteStatement {
                 sql: sql.into(),
@@ -86,6 +75,6 @@ impl<'c> Executor<'c> for &'c mut SqliteConnection {
     where
         'c: 'e,
     {
-        Box::pin(self.worker.describe(sql))
+        Box::pin(async move { self.worker.describe(sql) })
     }
 }

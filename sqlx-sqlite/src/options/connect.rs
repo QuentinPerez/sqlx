@@ -38,14 +38,6 @@ impl ConnectOptions for SqliteConnectOptions {
             // Execute PRAGMAs
             conn.execute(&*self.pragma_string()).await?;
 
-            if !self.collations.is_empty() {
-                let mut locked = conn.lock_handle().await?;
-
-                for collation in &self.collations {
-                    collation.create(&mut locked.guard.handle)?;
-                }
-            }
-
             Ok(conn)
         })
     }

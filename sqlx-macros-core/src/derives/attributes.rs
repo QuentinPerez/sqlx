@@ -30,7 +30,6 @@ macro_rules! try_set {
 
 pub struct TypeName {
     pub val: String,
-    pub span: Span,
 }
 
 impl TypeName {
@@ -105,10 +104,7 @@ pub fn parse_container_attributes(input: &[Attribute]) -> syn::Result<SqlxContai
                 } else if meta.path.is_ident("type_name") {
                     meta.input.parse::<Token![=]>()?;
                     let lit: LitStr = meta.input.parse()?;
-                    let name = TypeName {
-                        val: lit.value(),
-                        span: lit.span(),
-                    };
+                    let name = TypeName { val: lit.value() };
 
                     try_set!(type_name, name, lit)
                 } else {

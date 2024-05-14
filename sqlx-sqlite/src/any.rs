@@ -80,18 +80,14 @@ impl AnyConnectionBackend for SqliteConnection {
         let persistent = arguments.is_some();
         let args = arguments.map(map_arguments);
 
-        Box::pin(
-            self.worker
-                .execute(query, args, self.row_channel_size, persistent)
-                .map_ok(flume::Receiver::into_stream)
-                .try_flatten_stream()
-                .map(
-                    move |res: sqlx_core::Result<Either<SqliteQueryResult, SqliteRow>>| match res? {
-                        Either::Left(result) => Ok(Either::Left(map_result(result))),
-                        Either::Right(row) => Ok(Either::Right(AnyRow::try_from(&row)?)),
-                    },
-                ),
-        )
+        let iter = self.worker.execute(query, args, persistent);
+
+        futures_util::stream::iter(iter)
+            .map(|value| match value? {
+                Either::Left(result) => Ok(Either::Left(map_result(result))),
+                Either::Right(row) => Ok(Either::Right(AnyRow::try_from(&row)?)),
+            })
+            .boxed()
     }
 
     fn fetch_optional<'q>(
@@ -103,17 +99,10 @@ impl AnyConnectionBackend for SqliteConnection {
         let args = arguments.map(map_arguments);
 
         Box::pin(async move {
-            let stream = self
-                .worker
-                .execute(query, args, self.row_channel_size, persistent)
-                .map_ok(flume::Receiver::into_stream)
-                .await?;
-            futures_util::pin_mut!(stream);
-
-            if let Some(Either::Right(row)) = stream.try_next().await? {
+            let item = self.worker.execute(query, args, persistent).next();
+            if let Some(Ok(Either::Right(row))) = item {
                 return Ok(Some(AnyRow::try_from(&row)?));
             }
-
             Ok(None)
         })
     }

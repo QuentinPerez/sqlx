@@ -16,13 +16,7 @@ use std::ffi::{c_void, CStr, CString};
 use std::io;
 use std::os::raw::c_int;
 use std::ptr::{addr_of_mut, null, null_mut};
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
-
-// This was originally `AtomicU64` but that's not supported on MIPS (or PowerPC):
-// https://github.com/launchbadge/sqlx/issues/2859
-// https://doc.rust-lang.org/stable/std/sync/atomic/index.html#portability
-static THREAD_ID: AtomicUsize = AtomicUsize::new(0);
 
 enum SqliteLoadExtensionMode {
     /// Enables only the C-API, leaving the SQL function disabled.
@@ -47,8 +41,6 @@ pub struct EstablishParams {
     statement_cache_capacity: usize,
     log_settings: LogSettings,
     extensions: IndexMap<CString, Option<CString>>,
-    pub(crate) thread_name: String,
-    pub(crate) command_channel_size: usize,
     #[cfg(feature = "regexp")]
     register_regexp_function: bool,
 }
@@ -147,8 +139,6 @@ impl EstablishParams {
             })
             .collect::<Result<IndexMap<CString, Option<CString>>, io::Error>>()?;
 
-        let thread_id = THREAD_ID.fetch_add(1, Ordering::AcqRel);
-
         Ok(Self {
             filename,
             open_flags: flags,
@@ -156,8 +146,6 @@ impl EstablishParams {
             statement_cache_capacity: options.statement_cache_capacity,
             log_settings: options.log_settings.clone(),
             extensions,
-            thread_name: (options.thread_name)(thread_id as u64),
-            command_channel_size: options.command_channel_size,
             #[cfg(feature = "regexp")]
             register_regexp_function: options.register_regexp_function,
         })
@@ -175,7 +163,7 @@ impl EstablishParams {
             db,
             SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION,
             mode.as_int(),
-            null::<i32>(),
+            core::ptr::null_mut(),
         );
 
         if status != SQLITE_OK {

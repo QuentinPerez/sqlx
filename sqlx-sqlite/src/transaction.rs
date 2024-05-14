@@ -11,18 +11,18 @@ impl TransactionManager for SqliteTransactionManager {
     type Database = Sqlite;
 
     fn begin(conn: &mut SqliteConnection) -> BoxFuture<'_, Result<(), Error>> {
-        Box::pin(conn.worker.begin())
+        Box::pin(async move { conn.worker.begin() })
     }
 
     fn commit(conn: &mut SqliteConnection) -> BoxFuture<'_, Result<(), Error>> {
-        Box::pin(conn.worker.commit())
+        Box::pin(async move { conn.worker.commit() })
     }
 
     fn rollback(conn: &mut SqliteConnection) -> BoxFuture<'_, Result<(), Error>> {
-        Box::pin(conn.worker.rollback())
+        Box::pin(async move { conn.worker.rollback() })
     }
 
     fn start_rollback(conn: &mut SqliteConnection) {
-        conn.worker.start_rollback().ok();
+        conn.worker.rollback().ok();
     }
 }

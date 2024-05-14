@@ -17,7 +17,6 @@ use std::{borrow::Cow, time::Duration};
 pub use synchronous::SqliteSynchronous;
 
 use crate::common::DebugFn;
-use crate::connection::collation::Collation;
 use sqlx_core::IndexMap;
 
 /// Options and flags which can be used to configure a SQLite connection.
@@ -74,8 +73,6 @@ pub struct SqliteConnectOptions {
 
     pub(crate) command_channel_size: usize,
     pub(crate) row_channel_size: usize,
-
-    pub(crate) collations: Vec<Collation>,
 
     pub(crate) serialized: bool,
     pub(crate) thread_name: Arc<DebugFn<dyn Fn(u64) -> String + Send + Sync + 'static>>,
@@ -194,7 +191,6 @@ impl SqliteConnectOptions {
             vfs: None,
             pragmas,
             extensions: Default::default(),
-            collations: Default::default(),
             serialized: false,
             thread_name: Arc::new(DebugFn(|id| format!("sqlx-sqlite-worker-{id}"))),
             command_channel_size: 50,
@@ -336,31 +332,6 @@ impl SqliteConnectOptions {
         V: Into<Cow<'static, str>>,
     {
         self.pragmas.insert(key.into(), Some(value.into()));
-        self
-    }
-
-    /// Add a custom collation for comparing strings in SQL.
-    ///
-    /// If a collation with the same name already exists, it will be replaced.
-    ///
-    /// See [`sqlite3_create_collation()`](https://www.sqlite.org/c3ref/create_collation.html) for details.
-    ///
-    /// Note this excerpt:
-    /// > The collating function must obey the following properties for all strings A, B, and C:
-    /// >
-    /// > If A==B then B==A.
-    /// > If A==B and B==C then A==C.
-    /// > If A\<B then B>A.
-    /// > If A<B and B<C then A<C.
-    /// >
-    /// > If a collating function fails any of the above constraints and that collating function is
-    /// > registered and used, then the behavior of SQLite is undefined.
-    pub fn collation<N, F>(mut self, name: N, collate: F) -> Self
-    where
-        N: Into<Arc<str>>,
-        F: Fn(&str, &str) -> Ordering + Send + Sync + 'static,
-    {
-        self.collations.push(Collation::new(name, collate));
         self
     }
 
